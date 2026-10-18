@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: fountain-gate-academy
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm run db:init && npm start
+    healthCheckPath: /
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fountain-gate-db
+          property: connectionString
+      - key: DATABASE_SSL
+        value: "false"
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: PASSWORD_PEPPER
+        generateValue: true
+      - key: TOTP_ENCRYPTION_KEY
+        generateValue: true
+
+databases:
+  - name: fountain-gate-db
+    databaseName: fountain_gate_academy
+    user: fountain_gate_app
+    postgresMajorVersion: "17"
+    plan: free

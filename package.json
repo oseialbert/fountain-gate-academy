@@ -1,0 +1,27 @@
+{
+  "name": "keystone-auth",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Secure PostgreSQL-backed authentication app for a school assignment",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test",
+    "db:init": "node src/init-db.js"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "argon2": "^0.44.0",
+    "connect-pg-simple": "^10.0.0",
+    "dotenv": "^16.6.1",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.1.0",
+    "express-session": "^1.18.2",
+    "helmet": "^8.1.0",
+    "otpauth": "^9.4.0",
+    "pg": "^8.16.3",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": { "pg-mem": "^3.0.5", "supertest": "^7.1.4" }
+}
