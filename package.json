@@ -8,7 +8,8 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "test": "node --test",
-    "db:init": "node src/init-db.js"
+    "db:init": "node src/init-db.js",
+    "reset-password": "node src/reset-password.js"
   },
   "engines": { "node": ">=20" },
   "dependencies": {
