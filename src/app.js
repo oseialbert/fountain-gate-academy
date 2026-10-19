@@ -60,6 +60,20 @@ function createApp({ pool, config, sessionStore }) {
     index: false, dotfiles: 'deny', fallthrough: false, maxAge: config.nodeEnv === 'production' ? '1h' : 0
   }));
 
+  const mobileDirectory = path.join(__dirname, '..', 'mobile', 'web');
+  app.use('/app', helmet({
+    contentSecurityPolicy: { directives: {
+      defaultSrc: ["'self'"], scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'], fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+      imgSrc: ["'self'", 'data:'], connectSrc: ["'self'"], objectSrc: ["'none'"], frameAncestors: ["'none'"]
+    } },
+    referrerPolicy: { policy: 'no-referrer' }
+  }));
+  app.use('/app', express.static(mobileDirectory, {
+    index: false, dotfiles: 'deny', maxAge: config.nodeEnv === 'production' ? '1h' : 0
+  }));
+  app.get('/app', (_req, res) => res.sendFile(path.join(mobileDirectory, 'index.html')));
+
   function sendPage(page) {
     return (_req, res) => res.type('html').send(indexHtml.replace('<body>', `<body data-page="${page}">`));
   }

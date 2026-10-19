@@ -1,11 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
-export const API_BASE = 'https://fountain-gate-academy.onrender.com';
+const isWeb = Platform.OS === 'web';
+export const API_BASE = isWeb ? '' : 'https://fountain-gate-academy.onrender.com';
 
 const COOKIE_KEY = 'fga_session_cookie';
 let cookie = null;
 
 export async function loadCookie() {
+  if (isWeb) return;
   try {
     cookie = (await AsyncStorage.getItem(COOKIE_KEY)) || null;
   } catch {
@@ -15,6 +18,7 @@ export async function loadCookie() {
 
 export async function clearCookie() {
   cookie = null;
+  if (isWeb) return;
   try {
     await AsyncStorage.removeItem(COOKIE_KEY);
   } catch {
@@ -23,6 +27,7 @@ export async function clearCookie() {
 }
 
 function captureCookie(response) {
+  if (isWeb) return;
   let raw = '';
   try {
     if (typeof response.headers.getSetCookie === 'function') {
@@ -41,7 +46,7 @@ function captureCookie(response) {
 }
 
 async function send(path, options = {}) {
-  const response = await fetch(API_BASE + path, options);
+  const response = await fetch(API_BASE + path, { credentials: 'same-origin', ...options });
   captureCookie(response);
   let data = null;
   const text = await response.text();
@@ -57,10 +62,10 @@ async function send(path, options = {}) {
 
 export async function api(path, { method = 'GET', body } = {}) {
   const headers = { 'Content-Type': 'application/json' };
-  if (cookie) headers.Cookie = cookie;
+  if (!isWeb && cookie) headers.Cookie = cookie;
 
   if (method !== 'GET' && method !== 'HEAD') {
-    const csrfHeaders = cookie ? { Cookie: cookie } : {};
+    const csrfHeaders = !isWeb && cookie ? { Cookie: cookie } : {};
     const { data } = await send('/api/csrf', { method: 'GET', headers: csrfHeaders });
     if (data && data.token) headers['X-CSRF-Token'] = data.token;
   }
