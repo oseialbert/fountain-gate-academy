@@ -2,12 +2,18 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from 'react-native';
 import { api } from '../api';
 import { useAuth } from '../AuthContext';
-import { Btn, Field, Notice, Screen } from '../components';
+import { Btn, Field, Label, Notice, Screen, Segmented } from '../components';
 import { AuthHeader } from '../ui';
 import { colors } from '../theme';
 
+const roleOptions = [
+  { value: 'user', label: 'Staff / teacher' },
+  { value: 'admin', label: 'Administrator' }
+];
+
 export default function LoginScreen({ navigation }) {
   const { setUser } = useAuth();
+  const [role, setRole] = useState('user');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -17,7 +23,7 @@ export default function LoginScreen({ navigation }) {
     setError('');
     setBusy(true);
     try {
-      const data = await api('/api/login', { method: 'POST', body: { email: email.trim(), password } });
+      const data = await api('/api/login', { method: 'POST', body: { email: email.trim(), password, role } });
       if (data && data.requiresTwoFactor) {
         navigation.navigate('TwoFactor');
       } else if (data && data.user) {
@@ -39,6 +45,10 @@ export default function LoginScreen({ navigation }) {
           description="Sign in to manage students, classes, attendance, and grades."
         />
         <View style={styles.form}>
+          <View style={styles.field}>
+            <Label>Sign in as</Label>
+            <Segmented options={roleOptions} value={role} onChange={setRole} />
+          </View>
           <Field
             label="Email"
             value={email}
@@ -67,5 +77,6 @@ export default function LoginScreen({ navigation }) {
 const styles = StyleSheet.create({
   wrap: { gap: 18, paddingTop: 24 },
   form: { gap: 14 },
+  field: { gap: 2 },
   hint: { color: colors.muted, fontSize: 13, textAlign: 'center' }
 });

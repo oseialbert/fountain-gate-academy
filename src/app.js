@@ -15,6 +15,7 @@ const publicDirectory = path.join(__dirname, '..', 'public');
 const indexHtml = fs.readFileSync(path.join(publicDirectory, 'index.html'), 'utf8');
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+const signInRoles = { user: 'staff', admin: 'administrator' };
 
 function positiveId(value) {
   const id = Number(value);
@@ -156,10 +157,15 @@ function createApp({ pool, config, sessionStore }) {
     try {
       const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
       const password = typeof req.body.password === 'string' ? req.body.password : '';
+      const role = typeof req.body.role === 'string' ? req.body.role : '';
+      if (role && !Object.hasOwn(signInRoles, role)) return res.status(400).json({ error: 'Choose a valid role to sign in.' });
       const result = await pool.query('SELECT id, email, role, password_hash, totp_enabled FROM users WHERE email = $1', [email]);
       const user = result.rows[0];
       const valid = user && await verifyPassword(user.password_hash, password, config.passwordPepper);
       if (!valid) return res.status(401).json({ error: 'Email or password is incorrect.' });
+      if (role && user.role !== role) {
+        return res.status(403).json({ error: `This account does not have ${signInRoles[role]} access. Select the correct role and try again.` });
+      }
       if (user.totp_enabled) {
         return req.session.regenerate((error) => {
           if (error) return res.status(500).json({ error: 'Unable to start a secure session.' });

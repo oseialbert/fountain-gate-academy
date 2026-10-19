@@ -81,7 +81,7 @@ function renderRegister() {
 
 function renderLogin() {
   setNavigation();
-  shell('WELCOME BACK', 'Good to see you.', 'Sign in to your account. If two-factor authentication is enabled, you will verify with your authenticator next.', formCard('Sign in', 'Enter your account details to continue.', `${formField('Email address', 'email', 'email', { autocomplete: 'email', maxlength: 254 })}${formField('Password', 'password', 'password', { autocomplete: 'current-password', maxlength: 128 })}`, 'Sign in', 'login'));
+  shell('WELCOME BACK', 'Good to see you.', 'Sign in to your account. If two-factor authentication is enabled, you will verify with your authenticator next.', formCard('Sign in', 'Choose your access type, then enter your account details to continue.', `${selectField('Sign in as', 'role', [{ value: 'user', label: 'Staff / teacher' }, { value: 'admin', label: 'Administrator' }], 'user')}${formField('Email address', 'email', 'email', { autocomplete: 'email', maxlength: 254 })}${formField('Password', 'password', 'password', { autocomplete: 'current-password', maxlength: 128 })}`, 'Sign in', 'login'));
 }
 
 function renderTwoFactor() {

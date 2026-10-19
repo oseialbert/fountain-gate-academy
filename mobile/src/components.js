@@ -112,6 +112,27 @@ export function Tag({ text, color }) {
   );
 }
 
+export function Segmented({ options, value, onChange }) {
+  return (
+    <View style={styles.segmented}>
+      {options.map((option) => {
+        const active = option.value === value;
+        return (
+          <Pressable
+            key={option.value}
+            onPress={() => onChange(option.value)}
+            accessibilityRole="button"
+            accessibilityState={{ selected: active }}
+            style={({ pressed }) => [styles.segment, active && styles.segmentActive, pressed && styles.segmentPressed]}
+          >
+            <Text style={[styles.segmentText, active && styles.segmentTextActive]}>{option.label}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
 export function Loading({ label = 'Loading...' }) {
   return (
     <View style={styles.loading}>
@@ -179,6 +200,20 @@ const styles = StyleSheet.create({
   noticeText: { fontSize: 14, fontWeight: '600' },
   tag: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3, alignSelf: 'flex-start' },
   tagText: { fontSize: 12, fontWeight: '700', textTransform: 'capitalize' },
+  segmented: {
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: 10,
+    backgroundColor: colors.white,
+    padding: 4,
+    gap: 4
+  },
+  segment: { flex: 1, minHeight: 40, borderRadius: 8, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
+  segmentActive: { backgroundColor: colors.forest },
+  segmentPressed: { opacity: 0.85 },
+  segmentText: { fontSize: 14, fontWeight: '700', color: colors.muted },
+  segmentTextActive: { color: colors.lime },
   loading: { paddingVertical: 40, alignItems: 'center' },
   empty: { alignItems: 'center', paddingVertical: 30 },
   emptyTitle: { fontSize: 16, fontWeight: '700', color: colors.forest },

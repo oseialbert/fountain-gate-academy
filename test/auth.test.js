@@ -68,6 +68,18 @@ test('CSRF is required and registration creates only a user role', async () => {
   assert.equal(duplicate.status, 409);
 });
 
+test('login requires the selected role to match the account', async () => {
+  const wrongRole = await post('/api/login', { email: 'learner@example.test', password: 'A strong password 123!', role: 'admin' });
+  assert.equal(wrongRole.status, 403);
+  assert.equal((await client.get('/api/me')).status, 401);
+  const invalidRole = await post('/api/login', { email: 'learner@example.test', password: 'A strong password 123!', role: 'student' });
+  assert.equal(invalidRole.status, 400);
+  const correctRole = await post('/api/login', { email: 'learner@example.test', password: 'A strong password 123!', role: 'user' });
+  assert.equal(correctRole.status, 200);
+  assert.equal(correctRole.body.user.role, 'user');
+  await post('/api/logout', {});
+});
+
 test('login, encrypted authenticator setup, code verification, and replay rejection work', async () => {
   const loggedIn = await post('/api/login', { email: 'learner@example.test', password: 'A strong password 123!' });
   assert.equal(loggedIn.status, 200);
