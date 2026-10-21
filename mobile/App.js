@@ -18,6 +18,7 @@ import ClassesScreen from './src/screens/ClassesScreen';
 import ClassFormScreen from './src/screens/ClassFormScreen';
 import AttendanceScreen from './src/screens/AttendanceScreen';
 import GradesScreen from './src/screens/GradesScreen';
+import AdminScreen from './src/screens/AdminScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 
 const Stack = createNativeStackNavigator();
@@ -79,6 +80,11 @@ function MainTabs() {
         name="GradesList"
         component={GradesScreen}
         options={{ title: 'Grades', tabBarIcon: ({ focused }) => <TabIcon label="Grades" focused={focused} /> }}
+      />
+      <Tabs.Screen
+        name="Admin"
+        component={AdminScreen}
+        options={{ title: 'Accounts', tabBarIcon: ({ focused }) => <TabIcon label="Admin" focused={focused} /> }}
       />
       <Tabs.Screen
         name="Profile"

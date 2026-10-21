@@ -544,6 +544,23 @@ function createApp({ pool, config, sessionStore }) {
     } catch (error) { next(error); }
   });
 
+  app.delete('/api/admin/users/:id', requireAuth, requireAdmin, requireCsrf, async (req, res, next) => {
+    try {
+      const id = positiveId(req.params.id);
+      if (id === null) return res.status(400).json({ error: 'Choose a valid account to delete.' });
+      if (Number(req.session.userId) === id) return res.status(400).json({ error: 'You cannot delete your own account.' });
+      const admins = await pool.query("SELECT COUNT(*)::int AS count FROM users WHERE role = 'admin'");
+      const target = await pool.query('SELECT role FROM users WHERE id = $1', [id]);
+      if (!target.rows.length) return res.status(404).json({ error: 'That account no longer exists.' });
+      if (target.rows[0].role === 'admin' && admins.rows[0].count <= 1) {
+        return res.status(409).json({ error: 'At least one administrator account is required.' });
+      }
+      const removed = await pool.query('DELETE FROM users WHERE id = $1 RETURNING id', [id]);
+      if (!removed.rowCount) return res.status(404).json({ error: 'That account no longer exists.' });
+      res.json({ ok: true });
+    } catch (error) { next(error); }
+  });
+
   app.post('/api/admin/accounts', requireAuth, requireAdmin, requireCsrf, async (req, res, next) => {
     try {
       const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';

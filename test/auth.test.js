@@ -244,6 +244,41 @@ test('staff and admins have scoped school write and delete permissions', async (
   })).status, 403);
 });
 
+test('only administrators can delete accounts and the last admin is protected', async () => {
+  const adminApp2 = createApp({ pool, config });
+  const admin = request.agent(adminApp2);
+  assert.equal((await postWithCsrf(admin, '/api/register', {
+    email: 'deleter-admin@example.test', password: 'A deleting admin password 123!'
+  })).status, 201);
+  await pool.query("UPDATE users SET role = 'admin' WHERE email = $1", ['deleter-admin@example.test']);
+  assert.equal((await postWithCsrf(admin, '/api/login', {
+    email: 'deleter-admin@example.test', password: 'A deleting admin password 123!'
+  })).status, 200);
+
+  const provisioned = await postWithCsrf(admin, '/api/admin/accounts', {
+    email: 'delete-me-staff@example.test', password: 'A removable staff password 123!', role: 'user'
+  });
+  assert.equal(provisioned.status, 201);
+  const staffId = (await pool.query('SELECT id FROM users WHERE email = $1', ['delete-me-staff@example.test'])).rows[0].id;
+
+  const staffApp = createApp({ pool, config });
+  const staff = request.agent(staffApp);
+  assert.equal((await postWithCsrf(staff, '/api/register', {
+    email: 'no-delete-staff@example.test', password: 'A non deleting password 123!'
+  })).status, 201);
+  assert.equal((await postWithCsrf(staff, '/api/login', {
+    email: 'no-delete-staff@example.test', password: 'A non deleting password 123!'
+  })).status, 200);
+  assert.equal((await deleteWithCsrf(staff, `/api/admin/users/${staffId}`)).status, 403);
+
+  const selfId = (await pool.query('SELECT id FROM users WHERE email = $1', ['deleter-admin@example.test'])).rows[0].id;
+  assert.equal((await deleteWithCsrf(admin, `/api/admin/users/${selfId}`)).status, 400);
+  assert.equal((await deleteWithCsrf(admin, `/api/admin/users/${staffId}`)).status, 200);
+  const remaining = await pool.query('SELECT id FROM users WHERE id = $1', [staffId]);
+  assert.equal(remaining.rows.length, 0);
+  assert.equal((await deleteWithCsrf(admin, `/api/admin/users/999999`)).status, 404);
+});
+
 test('authentication endpoints rate-limit repeated attempts', async () => {
   const limitedApp = createApp({ pool, config: { ...config, authRateLimit: 2 } });
   const limitedClient = request.agent(limitedApp);

@@ -152,10 +152,10 @@ function renderPassword() {
 
 async function renderAdmin() {
   const { users } = await api('/api/admin/users');
-  const rows = users.map((user) => `<tr><td>${escapeHtml(user.email)}</td><td><span class="role-tag">${escapeHtml(user.role)}</span></td><td>${user.totp_enabled ? 'On' : 'Off'}</td><td>${new Date(user.created_at).toLocaleDateString()}</td></tr>`).join('');
+  const rows = users.map((user) => `<tr><td>${escapeHtml(user.email)}</td><td><span class="role-tag">${escapeHtml(user.role)}</span></td><td>${user.totp_enabled ? 'On' : 'Off'}</td><td>${new Date(user.created_at).toLocaleDateString()}</td><td class="row-actions"><button class="icon-action danger-action" type="button" data-action="delete-account" data-id="${user.id}" data-email="${escapeHtml(user.email)}" aria-label="Delete ${escapeHtml(user.email)}">Delete</button></td></tr>`).join('');
   setNavigation({ role: 'admin' });
   const accountForm = `<section class="data-panel account-create-panel"><div class="panel-heading"><div><p class="eyebrow">ADMIN ONLY</p><h2>Create an account</h2></div></div><p class="panel-copy">Create staff/teacher accounts or another administrator account. Share the temporary password securely.</p><div class="notice" data-message role="status" hidden></div><form data-form="account" class="record-form">${formField('Email address', 'email', 'email', { maxlength: 254 })}${formField('Temporary password', 'password', 'password', { autocomplete: 'new-password', minlength: 12, maxlength: 128 })}${selectField('Account type', 'role', [{ value: 'user', label: 'Staff / teacher' }, { value: 'admin', label: 'Administrator' }])}<button class="button button-primary" type="submit">Create account</button></form></section>`;
-  schoolPage('ADMINISTRATION', 'Account management', 'Create staff or administrator accounts and review access.', `${accountForm}<section class="data-panel"><div class="panel-heading"><div><p class="eyebrow">${users.length} ACCOUNTS</p><h2>Accounts</h2></div></div><div class="table-wrap"><table><thead><tr><th>Email</th><th>Account type</th><th>2FA</th><th>Joined</th></tr></thead><tbody>${rows || '<tr><td colspan="4">No accounts yet.</td></tr>'}</tbody></table></div></section>`);
+  schoolPage('ADMINISTRATION', 'Account management', 'Create or remove staff, teacher, and administrator accounts. Only administrators can delete accounts.', `${accountForm}<section class="data-panel"><div class="panel-heading"><div><p class="eyebrow">${users.length} ACCOUNTS</p><h2>Accounts</h2></div></div><div class="table-wrap"><table><thead><tr><th>Email</th><th>Account type</th><th>2FA</th><th>Joined</th><th>Action</th></tr></thead><tbody>${rows || '<tr><td colspan="5">No accounts yet.</td></tr>'}</tbody></table></div></section>`);
 }
 
 const renderers = { home: renderHome, register: renderRegister, login: renderLogin, 'verify-2fa': renderTwoFactor, dashboard: renderDashboard, students: renderStudents, classes: renderClasses, attendance: renderAttendance, grades: renderGrades, security: renderSecurity, 'change-password': renderPassword, admin: renderAdmin };
@@ -245,6 +245,12 @@ document.addEventListener('click', async (event) => {
       document.querySelector('[data-student-form-title]').textContent = 'Edit student';
       document.querySelector('#student-drawer').open = true;
       document.querySelector('#student-drawer').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else if (control.dataset.action === 'delete-account') {
+      const email = control.dataset.email;
+      if (!window.confirm(`Delete the account ${email}? They will lose access immediately. This cannot be undone.`)) return;
+      await api(`/api/admin/users/${encodeURIComponent(control.dataset.id)}`, { method: 'DELETE', body: '{}' });
+      await renderAdmin();
+      showMessage('Account deleted.');
     } else if (control.dataset.action === 'delete-student') {
       if (!window.confirm('Delete this student? Admins may also delete related attendance and grade history. Staff can only delete students without that history.')) return;
       await api(`/api/school/students/${encodeURIComponent(control.dataset.id)}`, { method: 'DELETE' });
