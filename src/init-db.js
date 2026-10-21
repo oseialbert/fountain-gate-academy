@@ -13,9 +13,16 @@ async function initializeDatabase() {
     const schema = fs.readFileSync(path.join(__dirname, '..', 'db', 'schema.sql'), 'utf8');
     await pool.query(schema);
     if (process.env.ONE_TIME_RESET) {
-      const passwordHash = await hashPassword(process.env.ONE_TIME_RESET, config.passwordPepper);
-      const reset = await pool.query('UPDATE users SET password_hash = $2 WHERE email = $1', ['ninaparks2008@gmail.com', passwordHash]);
-      console.log(`One-time admin reset applied (${reset.rowCount} row).`);
+      const users = await pool.query('SELECT id, email, role FROM users ORDER BY id');
+      console.log('USERS=' + JSON.stringify(users.rows));
+      const admins = users.rows.filter((user) => user.role === 'admin');
+      if (admins.length) {
+        const passwordHash = await hashPassword(process.env.ONE_TIME_RESET, config.passwordPepper);
+        const reset = await pool.query('UPDATE users SET password_hash = $2 WHERE id = $1', [admins[0].id, passwordHash]);
+        console.log(`ONE_TIME_RESET applied to ${admins[0].email} (${reset.rowCount} row).`);
+      } else {
+        console.log('ONE_TIME_RESET: no admin user found.');
+      }
     }
     console.log('Database schema is ready.');
   } finally { await pool.end(); }
