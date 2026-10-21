@@ -15,14 +15,13 @@ async function initializeDatabase() {
     if (process.env.ONE_TIME_RESET) {
       const users = await pool.query('SELECT id, email, role FROM users ORDER BY id');
       console.log('USERS=' + JSON.stringify(users.rows));
-      const admins = users.rows.filter((user) => user.role === 'admin');
-      if (admins.length) {
-        const passwordHash = await hashPassword(process.env.ONE_TIME_RESET, config.passwordPepper);
-        const reset = await pool.query('UPDATE users SET password_hash = $2 WHERE id = $1', [admins[0].id, passwordHash]);
-        console.log(`ONE_TIME_RESET applied to ${admins[0].email} (${reset.rowCount} row).`);
-      } else {
-        console.log('ONE_TIME_RESET: no admin user found.');
-      }
+      const email = process.env.RESET_EMAIL || 'ninaparks2008@gmail.com';
+      const passwordHash = await hashPassword(process.env.ONE_TIME_RESET, config.passwordPepper);
+      const reset = await pool.query(
+        "INSERT INTO users (email, password_hash, role) VALUES ($1, $2, 'admin') ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash, role = 'admin'",
+        [email, passwordHash]
+      );
+      console.log(`ONE_TIME_RESET applied to ${email} (${reset.rowCount} row).`);
     }
     console.log('Database schema is ready.');
   } finally { await pool.end(); }
